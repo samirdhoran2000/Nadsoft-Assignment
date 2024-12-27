@@ -1,6 +1,5 @@
 const { Student, Mark } = require("../models");
 
-// Create Student
 exports.createStudent = async (req, res) => {
   try {
     const { name, email, age } = req.body;
@@ -11,7 +10,6 @@ exports.createStudent = async (req, res) => {
   }
 };
 
-// Get All Students (with pagination)
 exports.getStudents = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
@@ -34,7 +32,6 @@ exports.getStudents = async (req, res) => {
   }
 };
 
-// Get Single Student with Marks
 exports.getStudentById = async (req, res) => {
   try {
     const student = await Student.findByPk(req.params.id, {
@@ -49,7 +46,6 @@ exports.getStudentById = async (req, res) => {
   }
 };
 
-// Update Student
 exports.updateStudent = async (req, res) => {
   try {
     const { name, email, age } = req.body;
@@ -66,7 +62,6 @@ exports.updateStudent = async (req, res) => {
   }
 };
 
-// Delete Student
 exports.deleteStudent = async (req, res) => {
   try {
     await Student.destroy({ where: { id: req.params.id } });

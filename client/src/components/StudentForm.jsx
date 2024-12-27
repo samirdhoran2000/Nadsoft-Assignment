@@ -1,80 +1,112 @@
 import React, { useState, useEffect } from "react";
-import { createStudent, updateStudent, getStudentById } from "../services/api";
+import { createStudent, updateStudent } from "../services/api";
 import Swal from "sweetalert2";
 
-const StudentForm = ({ selectedStudentId, onSuccess }) => {
-  const [formData, setFormData] = useState({ name: "", email: "", age: "" });
+const StudentForm = ({ onSubmitSuccess, initialData = null }) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    age: "",
+  });
 
   useEffect(() => {
-    if (selectedStudentId) {
-      getStudentById(selectedStudentId).then(({ data }) => {
-        setFormData({ name: data.name, email: data.email, age: data.age });
+    if (initialData) {
+      setFormData({
+        name: initialData.name || "",
+        email: initialData.email || "",
+        age: initialData.age || "",
       });
-    } else {
-      setFormData({ name: "", email: "", age: "" });
     }
-  }, [selectedStudentId]);
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  }, [initialData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (selectedStudentId) {
-        await updateStudent(selectedStudentId, formData);
-        Swal.fire("Success", "Student updated successfully", "success");
+      if (initialData?.id) {
+        const response = await updateStudent(initialData.id, {
+          name: formData.name,
+          email: formData.email,
+          age: parseInt(formData.age),
+        });
+        if (response.data.message) {
+          Swal.fire("Success", "Student updated successfully", "success");
+          onSubmitSuccess();
+        }
       } else {
-        await createStudent(formData);
-        Swal.fire("Success", "Student created successfully", "success");
+        const response = await createStudent({
+          name: formData.name,
+          email: formData.email,
+          age: parseInt(formData.age),
+        });
+        if (response.data) {
+          Swal.fire("Success", "Student created successfully", "success");
+          setFormData({ name: "", email: "", age: "" });
+          onSubmitSuccess();
+        }
       }
-      setFormData({ name: "", email: "", age: "" });
-      onSuccess();
     } catch (error) {
-      Swal.fire("Error", error.response.data.error, "error");
+      Swal.fire(
+        "Error",
+        error.response?.data?.message || "Operation failed",
+        "error"
+      );
     }
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="mb-3">
-        <label>Name</label>
-        <input
-          type="text"
-          className="form-control"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-        />
+    <div className="card mb-4">
+      <div className="card-body">
+        <h5 className="card-title">
+          {initialData ? "Edit Student" : "Add New Student"}
+        </h5>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-3">
+            <label className="form-label">Name</label>
+            <input
+              type="text"
+              className="form-control"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Email</label>
+            <input
+              type="email"
+              className="form-control"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Age</label>
+            <input
+              type="number"
+              className="form-control"
+              name="age"
+              value={formData.age}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <button type="submit" className="btn btn-primary">
+            {initialData ? "Update" : "Submit"}
+          </button>
+        </form>
       </div>
-      <div className="mb-3">
-        <label>Email</label>
-        <input
-          type="email"
-          className="form-control"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-      </div>
-      <div className="mb-3">
-        <label>Age</label>
-        <input
-          type="number"
-          className="form-control"
-          name="age"
-          value={formData.age}
-          onChange={handleChange}
-          required
-        />
-      </div>
-      <button type="submit" className="btn btn-primary">
-        {selectedStudentId ? "Update" : "Create"}
-      </button>
-    </form>
+    </div>
   );
 };
 

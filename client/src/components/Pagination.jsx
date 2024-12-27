@@ -1,12 +1,9 @@
 import React from "react";
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-
   return (
     <nav>
-      <ul className="pagination justify-content-center">
-        {/* Previous Page Button */}
+      <ul className="pagination">
         <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
           <button
             className="page-link"
@@ -16,20 +13,19 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
             Previous
           </button>
         </li>
-
-        {/* Page Numbers */}
-        {pages.map((page) => (
+        {[...Array(totalPages)].map((_, index) => (
           <li
-            key={page}
-            className={`page-item ${page === currentPage ? "active" : ""}`}
+            key={index + 1}
+            className={`page-item ${currentPage === index + 1 ? "active" : ""}`}
           >
-            <button className="page-link" onClick={() => onPageChange(page)}>
-              {page}
+            <button
+              className="page-link"
+              onClick={() => onPageChange(index + 1)}
+            >
+              {index + 1}
             </button>
           </li>
         ))}
-
-        {/* Next Page Button */}
         <li
           className={`page-item ${
             currentPage === totalPages ? "disabled" : ""

@@ -1,53 +1,98 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createMark, updateMark } from "../services/api";
-import { Button, Form } from "react-bootstrap";
+import Swal from "sweetalert2";
 
-const MarkForm = ({ studentId, markData, onFormSubmit }) => {
+const MarkForm = ({ studentId, onSubmitSuccess, initialData = null }) => {
   const [formData, setFormData] = useState({
-    subject: markData?.subject || "",
-    mark: markData?.mark || "",
+    subject: "",
+    mark: "",
   });
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        subject: initialData.subject || "",
+        mark: initialData.mark || "",
+      });
+    }
+  }, [initialData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (markData?.id) {
-        await updateMark(markData.id, formData);
+      if (initialData?.id) {
+        const response = await updateMark(initialData.id, {
+          subject: formData.subject,
+          mark: parseInt(formData.mark),
+        });
+        if (response.data.message) {
+          Swal.fire("Success", "Mark updated successfully", "success");
+          onSubmitSuccess();
+        }
       } else {
-        await createMark({ ...formData, student_id: studentId });
+        const response = await createMark({
+          student_id: studentId,
+          subject: formData.subject,
+          mark: parseInt(formData.mark),
+        });
+        if (response.data) {
+          Swal.fire("Success", "Mark added successfully", "success");
+          setFormData({ subject: "", mark: "" });
+          onSubmitSuccess();
+        }
       }
-      onFormSubmit();
     } catch (error) {
-      console.error("Failed to save mark", error);
+      Swal.fire(
+        "Error",
+        error.response?.data?.message || "Operation failed",
+        "error"
+      );
     }
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   return (
-    <Form onSubmit={handleSubmit}>
-      <Form.Group>
-        <Form.Label>Subject</Form.Label>
-        <Form.Control
-          type="text"
-          name="subject"
-          value={formData.subject}
-          onChange={handleChange}
-        />
-      </Form.Group>
-      <Form.Group>
-        <Form.Label>Mark</Form.Label>
-        <Form.Control
-          type="number"
-          name="mark"
-          value={formData.mark}
-          onChange={handleChange}
-        />
-      </Form.Group>
-      <Button type="submit">Save</Button>
-    </Form>
+    <div className="card mb-4">
+      <div className="card-body">
+        <h5 className="card-title">
+          {initialData ? "Edit Mark" : "Add New Mark"}
+        </h5>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-3">
+            <label className="form-label">Subject</label>
+            <input
+              type="text"
+              className="form-control"
+              name="subject"
+              value={formData.subject}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Mark</label>
+            <input
+              type="number"
+              className="form-control"
+              name="mark"
+              value={formData.mark}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <button type="submit" className="btn btn-primary">
+            {initialData ? "Update" : "Submit"}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 };
 
